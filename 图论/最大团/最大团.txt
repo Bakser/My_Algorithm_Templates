@@ -1,0 +1,45 @@
+//f[i]代表[i..n]组成的最大团的大小。当搜到deep层时，其实已经搜出来了一个大小为deep的团，此时q[deep]存的是与这deep个点都有边相连的节点，我们要从这些点里面选一个当做这个团的第deep+1个节点并更新q[deep]+1，根据数学归纳法，假如说选择是q[deep][j]，我们只需要判断q[deep][k](k>j)与q[deep][j]是否有边相连即可，因为q[deep][k]一定与前deep个点有边相连。共两个剪枝：如果当前deep个节点加上剩下的所有没有枚举的节点仍然无法更新答案，就剪枝；如果当前deep个节点加上f[q[deep][j]]无法更新答案，则剪枝；
+//f[i]并不是代表一定选第i个点，再选[i+1..n]时组成的最大团，而是代表[i..n]组成的最大团，i可以不选
+//常用结论：1、最大团点的数量=补图中最大独立集点的数量   2、图的染色问题中，最少需要的颜色的数量=最大团点的数量
+
+#include <cstdio>
+using namespace std;
+const int maxn=53;
+bool a[maxn][maxn];
+int f[maxn],q[maxn][maxn],n,ans;
+void dfs(int deep,int num)
+{
+	if (num==0)
+	{
+		if (deep>ans) ans=deep;
+		return;
+	}
+	int tot,i,j,x;
+	for (i=1;i<=num;i++)
+	{
+		if (num-i+1+deep<=ans) return;//第一个剪枝
+		x=q[deep][i];
+		if (deep+f[x]<=ans) return;//第二个剪枝
+		tot=0;
+		for (j=i+1;j<=num;j++) if (a[x][q[deep][j]]) q[deep+1][++tot]=q[deep][j];
+		dfs(deep+1,tot);
+	}
+	return;
+}
+int main()
+{
+	freopen("lx.in","r",stdin);
+	freopen("lx.out","w",stdout);
+	int i,j,x,y,num;
+	scanf("%d",&n);
+	while (~scanf("%d%d",&x,&y)) a[x][y]=a[y][x]=true;
+	for (i=n;i;i--)//主程序选择第一个节点时，为了更新f[i]，需从后往前枚举
+	{
+		num=0;
+		for (j=i+1;j<=n;j++) if (a[i][j]) q[1][++num]=j;
+		dfs(1,num);
+		f[i]=ans;
+	}
+	printf("%d\n",ans);
+	return 0;
+}

@@ -1,0 +1,60 @@
+//每个点的right集合大小，等于这个点对应的这一类字符串在原串的出现次数，等于parent树这个点子树中关键点（原串前缀匹配的点）的数目
+#include <cstdio>
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+const int N(500200);
+struct hh{
+	hh* par,*son[26];
+	int val,pos;
+}pool[N*2],*tail=pool,*root,*last;
+char s[N];
+int n,f[N],sum[N],top[N],tot,ans[N];
+inline hh* newnode(int _v){
+	hh *x=pool+(tot++);
+	x->pos=tot-1;
+	x->val=_v;
+	return x;
+}
+inline hh* insert(int x){//向后缀自动机中加入一个字符
+	hh *p=last,*np=newnode(p->val+1);
+	for(;p&&!p->son[x];p=p->par)p->son[x]=np;
+	if(!p)np->par=root;
+	else{
+		hh* q=p->son[x];
+		if(q->val==p->val+1)np->par=q;
+		else{
+			hh* nq=newnode(p->val+1);
+			nq->par=q->par;
+			memcpy(nq->son,q->son,sizeof q->son);
+			q->par=np->par=nq;
+			for(;p&&p->son[x]==q;p=p->par)p->son[x]=nq;
+		}
+	}
+	return np;
+}
+int main(){
+//	freopen("test.txt","r",stdin);
+	scanf("%s",s);
+	n=strlen(s);
+	root=newnode(0);last=root;
+	for(int i(0);i<n;i++)
+		last=insert(s[i]-'a');
+	for(int i(1);i<tot;i++)sum[pool[i].val]++;//对val基数排序，相当于topsort
+	for(int i(1);i<=n;i++)sum[i]+=sum[i-1];
+	for(int i(tot-1);i>=1;i--)top[--sum[pool[i].val]]=i;
+	hh* now=root;
+	for(int i(0);i<n;i++){//将每个前缀对应的节点设为关键点。
+		now=now->son[s[i]-'a'];
+		f[now->pos]=1;
+	}
+	for(int i(tot-1);i>=1;i--)
+		if(pool[top[i]].par)
+			f[pool[top[i]].par->pos]+=f[top[i]];//dp统计大小
+	for(int i(1);i<tot;i++)ans[pool[i].val]=max(ans[pool[i].val],f[i]);
+	for(int i(n-1);i>=1;i--)ans[i]=max(ans[i],ans[i+1]);
+	for(int i(1);i<=n;i++)
+		printf("%d\n",ans[i]);
+	return 0;
+}
